@@ -1,103 +1,172 @@
+import CurrencyAPI from '@everapi/currencyapi-js'
 import { Container, InputAdornment, Stack, TextField } from '@mui/material'
-import { useState } from 'react'
+import Grid2 from '@mui/material/Unstable_Grid2/Grid2'
+import { ChangeEvent, useEffect, useState } from 'react'
 import { KgFlagIcon } from './icons/KgFlagIcon'
-import { TrFlagIcon } from './icons/TrFlagIcon'
+import { UkFlagIcon } from './icons/UkFlagIcon'
 import { UsFlagIcon } from './icons/UsFlagIcon'
 
-const usdToTrl = 29
-const ustToKgs = 90
-
-const trlToUsd = 0.035
-const trlToKgs = 3
-
-const kgsToUsd = 0.011213
-const kgsToTrl = 0.323447
-
-const calcValue = (val1: string, val2: number): string => {
-  return Number((+val1 * val2).toFixed(2)).toString()
-}
-
 export const App = () => {
-  const [usdVal, setUsdVal] = useState('')
-  const [trlVal, setTrlVal] = useState('')
-  console.log('App ~ trlVal:', trlVal)
-  const [kgsVal, setKgsVal] = useState('')
+  const [gpbGiftCardNominal, setGpbNominal] = useState('84')
+  const [usdGiftCardPrice, setUsdPrice] = useState('93.39')
 
-  const calcUsdVal = () => {
-    if (trlVal) return calcValue(trlVal, trlToUsd)
-    if (kgsVal) return calcValue(kgsVal, kgsToUsd)
-    return usdVal.toString()
+  const [gbpValue, setGbpValue] = useState('')
+  const [usdValue, setUsdValue] = useState('')
+  const [exchangeRateUsdToKgs, setExchangeRateKgs] = useState('')
+
+  const exchangeRateGbpToUsd = (+usdGiftCardPrice / +gpbGiftCardNominal).toFixed(2)
+  const kgsResult = Math.round(+usdValue * +exchangeRateUsdToKgs)
+
+  const handleChangeNominal = (event: ChangeEvent<HTMLInputElement>) => {
+    setGpbNominal(event.target.value)
+  }
+  const handleChangeUsdPrice = (event: ChangeEvent<HTMLInputElement>) => {
+    setUsdPrice(event.target.value)
   }
 
-  const calcTrlVal = () => {
-    if (usdVal) return calcValue(usdVal, usdToTrl)
-    if (kgsVal) return calcValue(kgsVal, kgsToTrl)
-    return trlVal.toString()
+  const changeGbpValue = (event: ChangeEvent<HTMLInputElement>) => {
+    setGbpValue(event.currentTarget.value)
+    setUsdValue((+event.currentTarget.value * +exchangeRateGbpToUsd).toFixed(2))
   }
 
-  const calcKgsVal = () => {
-    if (usdVal) return calcValue(usdVal, ustToKgs)
-    if (trlVal) return calcValue(trlVal, trlToKgs)
-    return kgsVal.toString()
+  const changeExchangeRateKgs = (event: ChangeEvent<HTMLInputElement>) => {
+    setExchangeRateKgs(event.currentTarget.value)
   }
 
-  const usdChangeHandler = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setUsdVal(e.currentTarget.value)
-    setTrlVal('')
-    setKgsVal('')
+  const changeUsdValue = (event: ChangeEvent<HTMLInputElement>) => {
+    setGbpValue((+event.currentTarget.value / +exchangeRateGbpToUsd).toFixed(2))
+    setUsdValue(event.currentTarget.value)
   }
 
-  const trlChangeHandler = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setUsdVal('')
-    setTrlVal(e.currentTarget.value)
-    setKgsVal('')
-  }
+  const client = new CurrencyAPI(import.meta.env.VITE_CURRENCYAPI_KEY)
 
-  const kgsChangeHandler = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setUsdVal('')
-    setTrlVal('')
-    setKgsVal(e.currentTarget.value)
-  }
+  useEffect(() => {
+    client
+      .latest({
+        base_currency: 'USD',
+        currencies: 'KGS',
+      })
+      .then(
+        (response: {
+          data: {
+            [key: string]: {
+              code: string
+              value: number
+            }
+          }
+          meta: { last_updated_at: string }
+        }) => {
+          setExchangeRateKgs(response.data.KGS.value.toFixed(2))
+        }
+      )
+  }, [])
 
   return (
     <Container maxWidth='sm'>
       <Stack gap={2} minHeight='100svh' justifyContent='center'>
-        <TextField
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position='start'>
-                <UsFlagIcon />
-              </InputAdornment>
-            ),
-          }}
-          type='number'
-          value={calcUsdVal()}
-          onChange={usdChangeHandler}
-        />
-        <TextField
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position='start'>
-                <TrFlagIcon />
-              </InputAdornment>
-            ),
-          }}
-          type='number'
-          value={calcTrlVal()}
-          onChange={trlChangeHandler}
-        />
-        <TextField
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position='start' sx={{ fontSize: '20px' }}>
-                <KgFlagIcon />
-              </InputAdornment>
-            ),
-          }}
-          type='number'
-          value={calcKgsVal()}
-          onChange={kgsChangeHandler}
-        />
+        <Grid2 container spacing={2}>
+          <Grid2 xs={12}>
+            <Stack direction='row' gap={1}>
+              <TextField
+                type='number'
+                label='Game Price GBP'
+                fullWidth
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position='start' sx={{ fontSize: '20px' }}>
+                      <UkFlagIcon />
+                    </InputAdornment>
+                  ),
+                }}
+                onChange={changeGbpValue}
+                value={gbpValue}
+              />
+              <TextField
+                type='number'
+                label='Game Price GBP'
+                fullWidth
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position='start' sx={{ fontSize: '20px' }}>
+                      <UsFlagIcon />
+                    </InputAdornment>
+                  ),
+                }}
+                value={usdValue}
+                onChange={changeUsdValue}
+              />
+              <TextField
+                type='number'
+                label='Game Price GBP'
+                fullWidth
+                disabled
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position='start' sx={{ fontSize: '20px' }}>
+                      <KgFlagIcon />
+                    </InputAdornment>
+                  ),
+                }}
+                value={kgsResult}
+              />
+            </Stack>
+          </Grid2>
+          <Grid2 xs={12}>
+            <TextField
+              type='number'
+              label='Exchange rate USD to KGS'
+              fullWidth
+              onChange={changeExchangeRateKgs}
+              value={exchangeRateUsdToKgs}
+            />
+          </Grid2>
+          <Grid2 xs={12}>
+            <Stack direction='row' gap={1}>
+              <TextField
+                type='number'
+                label='GBP Gift Card nominal'
+                fullWidth
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position='start' sx={{ fontSize: '20px' }}>
+                      <UkFlagIcon />
+                    </InputAdornment>
+                  ),
+                }}
+                value={gpbGiftCardNominal}
+                onChange={handleChangeNominal}
+              />
+              <TextField
+                type='number'
+                label='USD Gift Card price'
+                fullWidth
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position='start' sx={{ fontSize: '20px' }}>
+                      <UsFlagIcon />
+                    </InputAdornment>
+                  ),
+                }}
+                value={usdGiftCardPrice}
+                onChange={handleChangeUsdPrice}
+              />
+              <TextField
+                type='number'
+                label='KGS Gift Card price'
+                fullWidth
+                disabled
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position='start' sx={{ fontSize: '20px' }}>
+                      <KgFlagIcon />
+                    </InputAdornment>
+                  ),
+                }}
+                value={Math.round(+usdGiftCardPrice * +exchangeRateUsdToKgs)}
+              />
+            </Stack>
+          </Grid2>
+        </Grid2>
       </Stack>
     </Container>
   )
