@@ -7,17 +7,20 @@ import { UkFlagIcon } from './icons/UkFlagIcon'
 import { UsFlagIcon } from './icons/UsFlagIcon'
 
 export const App = () => {
-  const [gpbGiftCardNominal, setGpbNominal] = useState('84')
-  const [usdGiftCardPrice, setUsdPrice] = useState('93.39')
+  const [gpbGiftCardNominal, setGpbNominal] = useState('32')
+  const [usdGiftCardPrice, setUsdPrice] = useState('37.09')
 
-  const [gbpValue, setGbpValue] = useState('')
-  const [usdValue, setUsdValue] = useState('')
   const [exchangeRateUsdToKgs, setExchangeRateKgs] = useState('')
 
+  const [gbpValue, setGbpValue] = useState('')
+
   const exchangeRateGbpToUsd = (+usdGiftCardPrice / +gpbGiftCardNominal).toFixed(2)
-  const kgsResult = Math.round(+usdValue * +exchangeRateUsdToKgs)
+
+  const usdValue = Number((+gbpValue * +exchangeRateGbpToUsd).toFixed(2)) || ''
+  const kgsResult = Math.round(+gbpValue * +exchangeRateGbpToUsd * +exchangeRateUsdToKgs)
 
   const handleChangeNominal = (event: ChangeEvent<HTMLInputElement>) => {
+    console.log('handleChangeNominal ~ event:', event)
     setGpbNominal(event.target.value)
   }
   const handleChangeUsdPrice = (event: ChangeEvent<HTMLInputElement>) => {
@@ -25,17 +28,16 @@ export const App = () => {
   }
 
   const changeGbpValue = (event: ChangeEvent<HTMLInputElement>) => {
+    console.log('changeGbpValue ~ event:', event)
     setGbpValue(event.currentTarget.value)
-    setUsdValue((+event.currentTarget.value * +exchangeRateGbpToUsd).toFixed(2))
-  }
-
-  const changeExchangeRateKgs = (event: ChangeEvent<HTMLInputElement>) => {
-    setExchangeRateKgs(event.currentTarget.value)
   }
 
   const changeUsdValue = (event: ChangeEvent<HTMLInputElement>) => {
     setGbpValue((+event.currentTarget.value / +exchangeRateGbpToUsd).toFixed(2))
-    setUsdValue(event.currentTarget.value)
+  }
+
+  const changeExchangeRateKgs = (event: ChangeEvent<HTMLInputElement>) => {
+    setExchangeRateKgs(event.currentTarget.value)
   }
 
   const client = new CurrencyAPI(import.meta.env.VITE_CURRENCYAPI_KEY)
